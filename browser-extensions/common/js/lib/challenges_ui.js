@@ -74,7 +74,7 @@ function add_challenges_to_table(table, challenge_results_type, data) {
 
    data.challenge_results[challenge_results_type].forEach(function (challenge) {
        //console.log("Generating table rows for " + challenge.shortname)
-	   var visible_variable = "visible_"+challenge.shortname.replace("-","_")
+	   var visible_variable = "visible_"+challenge.shortname.replace(/-/g,"_")
 	   var challenge_visibility = data.user_data[visible_variable]
 	   var start_time = new Date()
 	   if (challenge.shortname == 'regionnaire') {
