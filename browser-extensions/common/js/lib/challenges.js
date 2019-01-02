@@ -69,9 +69,42 @@ function generate_running_challenge_data(data) {
       "shortname": "christmas-day",
       "name": "Christmas Day",
       "data": [
-        {"month": 11, "day": 25}
+        {"month": 11, "date": 25}
       ],
       "help": "Run a parkrun on the 25th of December."}))
+	challenge_data.push(challenge_on_dates(data, {
+      "shortname": "thanksgiving",
+      "name": "Thanksgiving Turkey",
+      "data": [
+	  {"month": 10, "date": 25, "year": 2004},
+	  {"month": 10, "date": 24, "year": 2005},
+	  {"month": 10, "date": 23, "year": 2006},
+	  {"month": 10, "date": 22, "year": 2007},
+	  {"month": 10, "date": 27, "year": 2008},
+	  {"month": 10, "date": 26, "year": 2009},
+	  {"month": 10, "date": 25, "year": 2010},
+	  {"month": 10, "date": 24, "year": 2011},
+	  {"month": 10, "date": 22, "year": 2012},
+	  {"month": 10, "date": 28, "year": 2013},
+	  {"month": 10, "date": 27, "year": 2014},
+	  {"month": 10, "date": 26, "year": 2015},
+	  {"month": 10, "date": 24, "year": 2016},
+	  {"month": 10, "date": 23, "year": 2017},
+	  {"month": 10, "date": 22, "year": 2018},
+	  {"month": 10, "date": 28, "year": 2019},
+	  {"month": 10, "date": 26, "year": 2020},
+	  {"month": 10, "date": 25, "year": 2021},
+	  {"month": 10, "date": 24, "year": 2022},
+	  {"month": 10, "date": 23, "year": 2023},
+	  {"month": 10, "date": 28, "year": 2024},
+	  {"month": 10, "date": 27, "year": 2025},
+	  {"month": 10, "date": 26, "year": 2026},
+	  {"month": 10, "date": 25, "year": 2027},
+	  {"month": 10, "date": 23, "year": 2028},
+	  {"month": 10, "date": 22, "year": 2029}
+      ],
+      "help": "Run a parkrun on Thanksgiving."}))
+
     challenge_data.push(challenge_nyd_double(data, {
       "shortname": "nyd-double",
       "name":  "NYD Double",
@@ -1603,13 +1636,13 @@ function challenge_on_dates(data, params) {
   var parkrun_results = data.parkrun_results
   var o = create_data_object(params, "runner")
 
-  // This challenge looks to see that parkruns have been done on specific dates,
-  // therefore we are passed in a set of days/months to match. It's not fair to
-  // pass in a specific year as well, as no-one can work towards that, so we only
-  // allow month & day combinations. E.g. for Christmas, or to run in every month
+  // This function looks to see that parkruns have been done on specific dates,
+  // therefore we are passed in a set of days/months/years to match. We
+  // allow year, month,= and date in any combination. E.g. for Christmas, or to run in every month
   // of the year, or perhaps even every date of the year, or Feb 29th or something -
-  // all of these should work
-  var challenge_dates = params.data // dates should be an array
+  // all of these should work. Multiple fixed dates can be sent to test also, E.g.
+  // Thanksgiving dates are hardcoded for simplicity - instead of testing for '4th Thursday in November' style
+  var challenge_dates = params.data // dates should be an array"
 
   // For each part in the dates to match, make an empty array of matching
   // parkrun events.
@@ -1622,13 +1655,31 @@ function challenge_on_dates(data, params) {
       // If there is more than one subpart, then create the parts to show in the
       // ui
       $.each(challenge_dates, function (index, this_challenge_date) {
-
-        subpart_name = this_challenge_date.month+"/"+this_challenge_date.day
-        if (this_challenge_date.month !== undefined && this_challenge_date.day === undefined) {
-          subpart_name = 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_')[this_challenge_date.month]
-        } else if (this_challenge_date.month === undefined && this_challenge_date.day !== undefined) {
-          subpart_name = this_challenge_date.day+"st/nd/rd/th"
-        }
+		subpart_name = ""
+        if (this_challenge_date.date !== undefined) {
+			if (this_challenge_date.month !== undefined) {
+					subpart_name = this_challenge_date.date+"/"+(this_challenge_date.month+1)
+				if (this_challenge_date.year !== undefined) {
+					subpart_name = subpart_name+"/"+this_challenge_date.year
+				}
+			} else {
+				subpart_name = this_challenge_date.date+"st/nd/rd/th"
+				if (this_challenge_date.year !== undefined) {
+					subpart_name = subpart_name+" in "+this_challenge_date.year
+				}
+			}
+		} else {
+			if (this_challenge_date.month !== undefined) {
+					subpart_name = 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_')[this_challenge_date.month]
+				if (this_challenge_date.year !== undefined) {
+					subpart_name = subpart_name+" "+this_challenge_date.year
+				}
+			} else {
+				if (this_challenge_date.year !== undefined) {
+					subpart_name = this_challenge_date.year
+				}
+			}
+		}
 
         o.subparts_detail[index] = {
             "subpart": subpart_name
@@ -1648,13 +1699,25 @@ function challenge_on_dates(data, params) {
     if (challenge_dates !== undefined) {
       $.each(challenge_dates, function (index, this_challenge_date) {
         // Default to not matching
-        var applicable_month = false
-        var applicable_day = false
+        var applicable_year = false
+		var applicable_month = false
+        var applicable_date = false
 
-        // Check if the month matches (getMonth() - 0-11)
+        // Check if the month matches (getFullYear())
+        if (this_challenge_date.year !== undefined ) {
+          if (this_challenge_date.year == parkrun_event.date_obj.getFullYear()) {
+            //console.log("Event matches the year for : " + JSON.stringify(this_challenge_date))
+            applicable_year = true
+          }
+        } else {
+          // There is no month to match, so it's a wildcard and always matches
+          applicable_year = true
+        }
+		
+		// Check if the month matches (getMonth() - 0-11)
         if (this_challenge_date.month !== undefined ) {
           if (this_challenge_date.month == parkrun_event.date_obj.getMonth()) {
-            // console.log("Event matches the month for : " + JSON.stringify(this_challenge_date))
+            //console.log("Event matches the month for : " + JSON.stringify(this_challenge_date))
             applicable_month = true
           }
         } else {
@@ -1662,19 +1725,19 @@ function challenge_on_dates(data, params) {
           applicable_month = true
         }
 
-        // Check if the day of the month matches (getDate() - 1-31)
-        if (this_challenge_date.day !== undefined ) {
-          if (this_challenge_date.day == parkrun_event.date_obj.getDate()) {
-            // console.log("Event matches the day for : " + JSON.stringify(this_challenge_date))
-            applicable_day = true
+        // Check if the date of the month matches (getDate() - 1-31)
+        if (this_challenge_date.date !== undefined ) {
+          if (this_challenge_date.date == parkrun_event.date_obj.getDate()) {
+            //console.log("Event matches the date for : " + JSON.stringify(this_challenge_date))
+            applicable_date = true
           }
         } else {
-          // There is no day to match, so it's a wildcard and always matches
-          applicable_day = true
+          // There is no date to match, so it's a wildcard and always matches
+          applicable_date = true
         }
 
-        if (applicable_day && applicable_month) {
-          console.log("Event matches both day & month for : " + JSON.stringify(this_challenge_date) + " - " + JSON.stringify(parkrun_event))
+        if (applicable_date && applicable_month && applicable_year) {
+          //console.log("Event matches both date, month and year for : " + JSON.stringify(this_challenge_date) + " - " + JSON.stringify(parkrun_event))
           // Append this completed parkrun to the correct subpart list
           o.subparts[index].push(parkrun_event)
         }
