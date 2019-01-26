@@ -52,7 +52,12 @@ function generate_running_challenge_data(data) {
     challenge_data.push(challenge_words(data, {
       "shortname": "compass-club",
       "name": "Compass Club",
-      "data": ["north","south","east","west"],
+      "data": [
+		{label: "north", terms: ["north"]},
+		{label: "south", terms: ["south"]},
+		{label: "east" , terms: ["east"]},
+		{label: "west" , terms: ["west"]}
+	  ]
       "help": " Run at a parkrun named after each of the four compass points."}))
     challenge_data.push(challenge_parkruns(data, {
       "shortname": "full-ponty",
@@ -1166,15 +1171,38 @@ function challenge_start_letters(data, params) {
 function challenge_words(data, params) {
 
   var parkrun_results = data.parkrun_results
-    var word_array = params.data
+    var challenge_array = params.data
 
     var o = create_data_object(params, "runner")
     o.has_map = true
+	
+	var challenge_array = params.data // dates should be an array
 
-    // Add all the subparts to the list
+  // For each part in the dates to match, make an empty array of matching
+  // parkrun events.
+  o.subparts = []
+  if (challenge_array !== undefined) {
+    $.each(challenge_array, function (index, this_word) {
+      o.subparts[index] = []
+    })
+    if (challenge_array.length > 1) {
+      // If there is more than one subpart, then create the parts to show in the ui
+      $.each(challenge_array, function (index, this_word) {
+
+        subpart_name = this_word
+
+        o.subparts_detail[index] = {
+            "subpart": subpart_name
+        }
+
+      })
+    }
+  }
+  
+  if (challenge_array !== undefined) {
+      $.each(challenge_array, function (index, word_array) {
+
     word_array.forEach(function (word) {
-        // Store each one as the parts we need to do
-        o.subparts.push(word.toLowerCase())
         // Create placeholders for each contributing result
         o.subparts_detail.push(null)
     })
